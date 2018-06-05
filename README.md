@@ -1,4 +1,4 @@
-# CKEditor 5 bindings for React
+# CKEditor 5 Component for React
 
 <p align=center>⚠⚠ ⚠⚠ ⚠⚠
 
@@ -15,17 +15,17 @@ There are pre-build versions of CKEditor 5 that you can choose from:
 
 Install bindings and one of the builds:
 
-```
-npm install --save cke5-react @ckeditor/ckeditor5-build-classic
+```bash
+npm install --save @ckeditor/ckeditor5-react @ckeditor/ckeditor5-build-classic
 ```
 
 Use CKEditor component inside your project:
-```js
+
+```jsx
 import React, { Component } from 'react';
 import './App.css';
-import CKEditor from 'cke5-react';
+import CKEditor from '@ckeditor/ckeditor5-react';
 import ClassicEditorBuild from '@ckeditor/ckeditor5-build-classic';
-
 
 class App extends Component {
 	render() {
@@ -46,9 +46,12 @@ export default App;
 ```
 
 ##### TODO: Even after adding CKEditor 5 build to the babel process it producess some errors in Create React App production:
-```js
+
+```bash
 41:13-31 "export 'default' (imported as 'ClassicEditorBuild') was not found in '@ckeditor/ckeditor5-build-classic/build/ckeditor'
 ```
+
+Most probably it is related to minifying the code. CKEditor 5 Builds are minified by default and there is no need to minify it once again.
 
 ## Building custom editor together with your React project
 
@@ -56,38 +59,48 @@ This guide is assuming that you are using [Create React App CLI](https://github.
 boilerplate. If not please read more about webpack configuration [here](https://docs.ckeditor.com/ckeditor5/latest/framework/guides/quick-start.html#lets-start).
 
 Install React CLI:
-``` 
+
+```bash
 npm install -g create-react-app
 ```
 
 Create your project using the CLI and go to the project's directory:
-```
+
+```bash
 create-react-app ckeditor5-react-example && cd ckeditor5-react-example
 ```
 
 Ejecting configuration is needed for custom webpack configuration to load inline SVG images. 
 More information about ejecting can be found [here](https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#npm-run-eject).
 
-```
+```bash
 npm run eject
 ```
 
 We need to modify webpack configuration scripts to load CKEditor 5 SVG icons properly. After ejecting they are located at
-```
+
+```bash
 <project_root>/config/webpack.config.dev.js
 <project_root>/config/webpack.config.prod.js
 ```
 
-### Changes that need to be made to both config files (webpack.config.dev.js and webpack.config.prod.js)
+### Changes that need to be made to both config files (`webpack.config.dev.js` and `webpack.config.prod.js`)
 
-In both files add two new elements to exported object under `module.rules` array, these are SVG and CSS loaders only for CKEditor 5 code:
+In both files, at the beginning import an object that creates a configuration for PostCSS:
+
+```js
+const { styles } = require( '@ckeditor/ckeditor5-dev-utils' );
+```
+
+Then add two new elements to exported object under `module.rules` array. These are SVG and CSS loaders only for CKEditor 5 code:
+
 ```js 
 {
-  test: /ckeditor5-[^/]+\/theme\/icons\/[^/]+\.svg$/,
+  test: /ckeditor5-[^/\\]+\/theme\/icons\/[^/\\]+\.svg$/,
   use: [ 'raw-loader' ]
 },
 {
-  test: /ckeditor5-[^/]+\/theme\/.+\.css/,
+  test: /ckeditor5-[^/\\]+\/theme\/.+\.css/,
   use: [
     {
       loader: 'style-loader',
@@ -113,11 +126,12 @@ Exclude CSS files used by CKEditor 5 from project's CSS loader:
 ```js
 {
   test: /\.css$/,
-  exclude: /ckeditor5-[^/]+\/theme\/.+\.css/,
-  (...)
+  exclude: /ckeditor5-[^/\\]+\/theme\/.+\.css/,
+  // (...)
 ```
 
-and exclude CKEditor 5 SVG and CSS files from `file-loader` (usually the last item in `module.rules` array) so it looks like this:
+and exclude CKEditor 5 SVG and CSS files from `file-loader` because these files will be handled by the loaders added previously 
+(usually the last item in `module.rules` array is the `file-loader`) so it looks like this:
 
 ```js
 {
@@ -130,8 +144,8 @@ and exclude CKEditor 5 SVG and CSS files from `file-loader` (usually the last it
   	/\.(js|jsx|mjs)$/, 
   	/\.html$/, 
   	/\.json$/, 
-  	/ckeditor5-[^/]+\/theme\/icons\/[^/]+\.svg$/,
-  	/ckeditor5-[^/]+\/theme\/.+\.css/
+  	/ckeditor5-[^/\\]+\/theme\/icons\/[^/\\]+\.svg$/,
+  	/ckeditor5-[^/\\]+\/theme\/.+\.css/
   ],
   options: {
     name: 'static/media/[name].[hash:8].[ext]'
@@ -139,23 +153,26 @@ and exclude CKEditor 5 SVG and CSS files from `file-loader` (usually the last it
 }
 ```
 
-Next, install `raw-loader`:
-``` 
-npm install --save-dev raw-loader
+Next, install `raw-loader` and CKEditor 5 dev-utils:
+
+```bash 
+npm install --save-dev raw-loader @ckeditor/ckeditor5-dev-utils
 ```
 
 Install bindings, editor and plugins you need:
 
 ``` 
 npm install --save \ 
-	cke5-react \ 
+	@ckeditor/ckeditor5-react \ 
 	@ckeditor/ckeditor5-editor-classic \
-	@ckeditor/ckeditor5-essentials/src/essentials \
+	@ckeditor/ckeditor5-essentials \
 	@ckeditor/ckeditor5-basic-styles \
-	@ckeditor/ckeditor5-heading
+	@ckeditor/ckeditor5-heading \
+	@ckeditor/ckeditor5-paragraph
 ```
 
-### Changes in webpack.config.prod.js only
+### Changes in `webpack.config.prod.js` only
+
 CKEditor 5 files are not transpiled to ES5 by default. Add CKEditor 5 files to be processed by Babel:
 
 ```js
@@ -166,16 +183,15 @@ CKEditor 5 files are not transpiled to ES5 by default. Add CKEditor 5 files to b
     paths.appSrc,
     path.resolve( 'node_modules', '@ckeditor' )
   ],
-  (...)
+  // (...)
 ```
-
 
 ### Use CKEditor component inside your project:
 
 ```js
 import React, { Component } from 'react';
 import './App.css';
-import CKEditor from 'cke5-react';
+import CKEditor from '@ckeditor/ckeditor5-react';
 
 import ClassicEditor from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
 import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials';
