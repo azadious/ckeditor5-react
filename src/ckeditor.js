@@ -5,7 +5,7 @@ export default class CKEditor extends React.Component {
 
 	constructor( props ) {
 		super( props );
-
+		this.init = true;
 		this.editorInstance = null;
 	}
 
@@ -16,8 +16,9 @@ export default class CKEditor extends React.Component {
 
 	// Update editor data if data property is changed.
 	componentWillReceiveProps( newProps ) {
-		if ( this.editorInstance && newProps.data ) {
+		if ( this.editorInstance && newProps.data && this.init) {
 			this.editorInstance.setData( newProps.data );
+			this.init = false;
 		}
 	}
 
